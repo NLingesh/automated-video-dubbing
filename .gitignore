@@ -1,0 +1,31 @@
+# Python virtualenv and cache files
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Local configuration environment variables
+.env
+
+# Input directory files (exclude keeping folder structure)
+input/videos/*
+input/audio/*
+input/transcript/*
+!input/videos/.gitkeep
+!input/audio/.gitkeep
+!input/transcript/.gitkeep
+
+# Output directory files (exclude keeping folder structure)
+output/dubbed_videos/*
+output/english_audio/*
+output/translated_text/*
+output/subtitles/*
+output/logs/*
+!output/dubbed_videos/.gitkeep
+!output/english_audio/.gitkeep
+!output/translated_text/.gitkeep
+!output/subtitles/.gitkeep
+!output/logs/.gitkeep
