@@ -56,6 +56,7 @@ def format_seconds_to_srt_time(seconds: float) -> str:
 def generate_srt(segments: List[Dict[str, Any]], output_path: Path) -> Path:
     """
     Generates a standard SubRip (.srt) subtitle file from Whisper segments.
+    Uses translated_text if available, otherwise falls back to text.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -69,9 +70,10 @@ def generate_srt(segments: List[Dict[str, Any]], output_path: Path) -> Path:
             # Start time --> End time
             # Subtitle text (strip to clean any whitespace)
             # Empty line
+            text = segment.get("translated_text", segment.get("text", "")).strip()
             f.write(f"{idx}\n")
             f.write(f"{start_str} --> {end_str}\n")
-            f.write(f"{segment.get('text', '').strip()}\n\n")
+            f.write(f"{text}\n\n")
             
     return output_path
 
@@ -91,26 +93,19 @@ def write_execution_report(
 ) -> Path:
     """
     Generates a report.json summarizing execution details and metrics.
+    Includes exact keys: Video Name, Processing Time, Detected Language, Output Language, Generated Files, Status.
     """
     report_data: Dict[str, Any] = {
+        "Video Name": video_name,
+        "Processing Time": processing_time,
+        "Detected Language": input_language,
+        "Output Language": output_language,
+        "Generated Files": generated_files,
+        "Status": status,
         "execution_timestamp": datetime.now().isoformat(),
-        "status": status,
-        "video": {
-            "name": video_name,
-            "duration_seconds": duration,
-        },
-        "languages": {
-            "detected_input_language": input_language,
-            "output_language": output_language,
-        },
-        "performance": {
-            "total_processing_time_seconds": processing_time,
-        },
-        "configurations": {
-            "whisper_model": whisper_model,
-            "voice_model": voice_model,
-        },
-        "output_files": generated_files,
+        "duration_seconds": duration,
+        "whisper_model": whisper_model,
+        "voice_model": voice_model,
     }
     
     if error_reason:

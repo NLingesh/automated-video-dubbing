@@ -1,0 +1,17 @@
+{
+    "Video Name": "when men shaved their beard.mp4",
+    "Processing Time": 282.6345772049972,
+    "Detected Language": "ta",
+    "Output Language": "en",
+    "Generated Files": [
+        "/home/wiz/Desktop/automated-video-dubbing/input/videos/when men shaved their beard.mp4",
+        "/home/wiz/Desktop/automated-video-dubbing/input/audio/when men shaved their beard.wav",
+        "/home/wiz/Desktop/automated-video-dubbing/output/dubbed_videos/when men shaved their beard_english.mp4",
+        "/home/wiz/Desktop/automated-video-dubbing/output/subtitles/video.srt"
+    ],
+    "Status": "SUCCESS",
+    "execution_timestamp": "2026-07-20T22:07:49.089632",
+    "duration_seconds": 77.484989,
+    "whisper_model": "base",
+    "voice_model": "en-US-GuyNeural"
+}

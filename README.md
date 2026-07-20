@@ -116,19 +116,36 @@ OUTPUT_LANGUAGE=en
 
 ## Usage
 
-Run the interface runner script:
+The system supports two execution modes:
+
+### 1. Interactive CLI Mode
+Run the command-line interface:
 ```bash
 python run.py
 ```
 1. Enter the YouTube URL when prompted.
-2. The pipeline will automatically:
-   - Download the video.
-   - Extract and process audio.
-   - Transcribe and detect language.
-   - Translate to English.
-   - Synthesize speech.
-   - Merge and compile the dubbed MP4.
-3. Review metrics and check the final video in `output/dubbed_videos/`.
+2. The pipeline will execute sequentially and show logs in the console.
+3. The final dubbed video will be saved to `output/dubbed_videos/<video_name>_english.mp4`.
+4. Subtitles will be saved to `output/subtitles/video.srt`.
+5. The execution report will be saved to `output/report.json`.
+
+### 2. Streamlit Web UI Mode
+Run the premium web application:
+```bash
+streamlit run app.py
+```
+This launches a modern dashboard in your web browser with features including:
+- Dark theme
+- Custom inputs for URL, Whisper model, and Output Voice
+- Real-time progress bar & live logs display
+- Built-in video player to preview the dubbed video
+- Direct download buttons for the video, subtitles, and JSON report.
+
+---
+
+## Screenshots Placeholder
+
+![AI Video Dubbing Studio Dashboard](assets/dashboard_placeholder.png)
 
 ---
 

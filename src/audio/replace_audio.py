@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 from config import DUCKING_VOLUME, MAX_SPEECH_SPEEDUP
 from src.utils.ffmpeg_utils import (
-    adjust_audio_speed,
     concat_audio_files,
     create_silence,
     get_media_duration,
     mix_audio_ducking,
+    process_audio_segment,
     replace_video_audio,
 )
 from src.utils.logger import setup_logger
@@ -66,6 +66,10 @@ class AudioReplacer:
                 end = seg["end"]
                 target_dur = end - start
                 
+                if target_dur <= 0:
+                    logger.warning(f"Segment {idx} has invalid target duration: {target_dur}. Skipping.")
+                    continue
+
                 # 1. Handle Silent Gap before segment starts
                 if start > current_time:
                     gap = start - current_time
@@ -77,37 +81,21 @@ class AudioReplacer:
 
                 # 2. Process segment voice audio (if it exists)
                 if voice_path and voice_path.exists():
-                    tts_dur = get_media_duration(voice_path)
-                    
-                    # If synthesized voice is longer than the target video segment duration
-                    if tts_dur > target_dur:
-                        speed_ratio = tts_dur / target_dur
-                        # Cap the maximum speedup ratio to keep speech understandable
-                        if speed_ratio > MAX_SPEECH_SPEEDUP:
-                            logger.warning(
-                                f"Segment {idx} requires speedup of {speed_ratio:.2f}x, which exceeds limit. "
-                                f"Capping at {MAX_SPEECH_SPEEDUP}x."
-                            )
-                            speed_ratio = MAX_SPEECH_SPEEDUP
-                            
-                        adjusted_file = temp_dir / f"seg_voice_speed_{idx:04d}.wav"
-                        adjust_audio_speed(voice_path, adjusted_file, speed_ratio)
-                        actual_dur = tts_dur / speed_ratio
-                    else:
-                        # Convert segment MP3 to 16kHz mono WAV at 1.0x speed
-                        adjusted_file = temp_dir / f"seg_voice_normal_{idx:04d}.wav"
-                        adjust_audio_speed(voice_path, adjusted_file, 1.0)
-                        actual_dur = tts_dur
-                        
-                    concat_list.append(adjusted_file)
-                    current_time += actual_dur
+                    processed_voice = temp_dir / f"seg_processed_{idx:04d}.wav"
+                    process_audio_segment(
+                        input_path=voice_path,
+                        output_path=processed_voice,
+                        target_duration=target_dur,
+                        max_speedup=MAX_SPEECH_SPEEDUP
+                    )
+                    concat_list.append(processed_voice)
+                    current_time += target_dur
                 else:
                     # If segment text is empty/skipped, treat the duration as silence
-                    if target_dur > 0:
-                        empty_silence = temp_dir / f"silence_empty_{idx:04d}.wav"
-                        create_silence(target_dur, empty_silence)
-                        concat_list.append(empty_silence)
-                        current_time += target_dur
+                    empty_silence = temp_dir / f"silence_empty_{idx:04d}.wav"
+                    create_silence(target_dur, empty_silence)
+                    concat_list.append(empty_silence)
+                    current_time += target_dur
 
             # 3. Add final silence padding up to the end of the video
             if video_duration > current_time:
@@ -138,7 +126,7 @@ class AudioReplacer:
             )
 
             # 6. Replace audio in original video with our final dubbed-and-ducked track
-            output_video = self.output_directory / f"{video_path.stem}_dubbed.mp4"
+            output_video = self.output_directory / f"{video_path.stem}_english.mp4"
             logger.info("Muxing final video and audio tracks...")
             replace_video_audio(
                 video_path=video_path,

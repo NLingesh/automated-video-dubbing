@@ -119,10 +119,15 @@ class VideoTranslator:
         logger.info(f"Translating {len(segments)} segments from '{source_lang}' to '{target_lang}'")
         
         if not segments:
+            # Ensure the output file is created even if there are no segments
+            output_file = self.output_directory / "translated_text.txt"
+            output_file.write_text("", encoding="utf-8")
             return []
 
         # Extract texts for batch translation
         texts_to_translate = [seg.get("text", "") for seg in segments]
+        translated_texts = []
+        translation_failed = False
         
         try:
             translated_texts = self.engine.translate_batch(
@@ -130,24 +135,28 @@ class VideoTranslator:
                 source_lang=source_lang,
                 target_lang=target_lang
             )
-            
-            # Update segments with translations
-            translated_segments = []
-            for seg, trans_text in zip(segments, translated_texts):
-                updated_seg = seg.copy()
-                updated_seg["translated_text"] = trans_text.strip()
-                translated_segments.append(updated_seg)
-                
-            # Save the complete translated text to output directory
-            full_translated_text = "\n".join(
-                [seg["translated_text"] for seg in translated_segments if seg["translated_text"]]
-            )
-            output_file = self.output_directory / "translated_text.txt"
-            output_file.write_text(full_translated_text, encoding="utf-8")
-            
-            logger.info(f"Segment translation complete. Saved full text to: {output_file.name}")
-            return translated_segments
-            
         except Exception as e:
-            logger.error(f"Failed to translate segments: {e}")
-            raise TranslationError(f"Segment translation failed: {e}") from e
+            logger.error(f"Failed to translate segments: {e}. Falling back to original texts.")
+            translated_texts = [text for text in texts_to_translate]
+            translation_failed = True
+            
+        # Update segments with translations
+        translated_segments = []
+        for seg, trans_text in zip(segments, translated_texts):
+            updated_seg = seg.copy()
+            cleaned_trans = (trans_text or "").strip()
+            # If translated text is empty, fall back to the original text
+            if not cleaned_trans:
+                cleaned_trans = seg.get("text", "").strip()
+            updated_seg["translated_text"] = cleaned_trans
+            translated_segments.append(updated_seg)
+            
+        # Save the complete translated text to output directory
+        full_translated_text = "\n".join(
+            [seg["translated_text"] for seg in translated_segments if seg["translated_text"]]
+        )
+        output_file = self.output_directory / "translated_text.txt"
+        output_file.write_text(full_translated_text, encoding="utf-8")
+        
+        logger.info(f"Segment translation complete (failed={translation_failed}). Saved full text to: {output_file.name}")
+        return translated_segments

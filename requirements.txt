@@ -5,3 +5,4 @@ googletrans==4.0.0rc1
 edge-tts>=6.1.9
 python-dotenv>=1.0.1
 tqdm>=4.66.2
+streamlit>=1.32.0
